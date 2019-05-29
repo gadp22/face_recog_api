@@ -192,7 +192,7 @@ exports.recognize = function (req, res) { return __awaiter(_this, void 0, void 0
         response = {};
         data = {};
         try {
-            imageSource = req.body.faceDescriptor[0].descriptor;
+            imageSource = req.body.faceDescriptor;
             for (i in imageSource) {
                 faceDescriptor.push(imageSource[i]);
             }

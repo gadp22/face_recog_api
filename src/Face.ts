@@ -139,7 +139,7 @@ export const recognize = async(req :any, res :any) => {
   let data :any = {}
 
   try {
-    let imageSource = req.body.faceDescriptor[0].descriptor
+    let imageSource = req.body.faceDescriptor
 
     for (let i in imageSource) {
       faceDescriptor.push(imageSource[i])

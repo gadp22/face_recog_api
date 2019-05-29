@@ -50,9 +50,15 @@ var express_1 = __importDefault(require("express"));
 var database = __importStar(require("./Database"));
 var face = __importStar(require("./Face"));
 require("@tensorflow/tfjs-node");
+var fs_1 = __importDefault(require("fs"));
 var app = express_1.default();
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use(express_1.default.json());
+app.use(function (req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+});
 app.listen(3000, function () {
     init();
     console.log("Example app listening on port 3000!");
@@ -92,3 +98,16 @@ app.get('/members', function (req, res) {
 app.get('/members/:id', function (req, res) {
     face.getRegisteredData(res, req.params.id);
 });
+app.get('/answeryes', function (req, res) {
+    append('yes\n', res);
+});
+app.get('/answerno', function (req, res) {
+    append('no\n', res);
+});
+function append(msg, res) {
+    fs_1.default.appendFile(msg + '.txt', msg, function (err) {
+        if (err)
+            throw err;
+        res.send('saved');
+    });
+}
