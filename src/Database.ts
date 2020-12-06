@@ -22,6 +22,8 @@ export const initDB = async () => {
 export const insertDocuments = (data :any) => {
   const collection = db.collection('descriptors')
 
+  console.log("inserting documents")
+
   collection.insertOne(data, function(err :any, result :any) {
       console.log(err)
       populateRegisteredMembersDescriptors()

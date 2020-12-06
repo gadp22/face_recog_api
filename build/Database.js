@@ -1,9 +1,10 @@
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -34,8 +35,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var _this = this;
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.findAllDocuments = exports.insertDocuments = exports.initDB = void 0;
 require("mongodb");
 require("dotenv/config");
 require("./Face");
@@ -46,7 +47,7 @@ var dbName = 'face';
 var url = 'mongodb://' + process.env.DBHOST + ':' + process.env.DBPORT;
 var client = new MongoClient(url);
 var db;
-exports.initDB = function () { return __awaiter(_this, void 0, void 0, function () {
+var initDB = function () { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         client.connect(function () {
             console.log("Connected successfully to the database server");
@@ -55,14 +56,17 @@ exports.initDB = function () { return __awaiter(_this, void 0, void 0, function 
         return [2 /*return*/];
     });
 }); };
-exports.insertDocuments = function (data) {
+exports.initDB = initDB;
+var insertDocuments = function (data) {
     var collection = db.collection('descriptors');
+    console.log("inserting documents");
     collection.insertOne(data, function (err, result) {
         console.log(err);
         Face_1.populateRegisteredMembersDescriptors();
     });
 };
-exports.findAllDocuments = function () {
+exports.insertDocuments = insertDocuments;
+var findAllDocuments = function () {
     var id = [];
     for (var _i = 0; _i < arguments.length; _i++) {
         id[_i] = arguments[_i];
@@ -85,3 +89,4 @@ exports.findAllDocuments = function () {
         });
     });
 };
+exports.findAllDocuments = findAllDocuments;

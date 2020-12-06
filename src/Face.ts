@@ -14,7 +14,8 @@ export const populateRegisteredMembersDescriptors = async () => {
   
   await findReferences.then(function(imageReferences) {
     type Dict = { [key :string] :any }
-    const referenceObject :Dict = imageReferences
+    const object :any = imageReferences
+    const referenceObject :Dict = object
 
     for (let i = 0, len = referenceObject.length; i < len; i++) {
       let registeredMember :any = {}
@@ -115,8 +116,13 @@ export const trainData = (req :any, res :any) => {
         let imageElement = await canvas.loadImage(image['uri'])
         let imageResult = await faceapi.detectAllFaces(imageElement, faceDetectionOptions).withFaceLandmarks().withFaceDescriptors()
         let faceMatcher = await new faceapi.FaceMatcher(imageResult) 
+
+        console.log(imageElement)
+        console.log(imageResult)
   
         jsonData['descriptors'] = await faceMatcher.labeledDescriptors[0].descriptors[0]
+
+        database.insertDocuments(jsonData)
   
         console.log('done, saved results to the database.')
       })
