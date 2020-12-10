@@ -1,4 +1,5 @@
 import express from 'express'
+import async from 'async';
 import * as database from './Database'
 import * as face from './Face'
 import '@tensorflow/tfjs-node'
@@ -20,10 +21,12 @@ app.listen(3000, () => {
   }
 )
 
-let init = async () => {
-  await database.initDB()
-  await face.loadModel()
-  await face.populateRegisteredMembersDescriptors()
+let init = () => {
+  const tasks = [database.initDB, face.loadModel, face.populateRegisteredMembersDescriptors]
+  
+  async.series(tasks, function (err, results) {
+    console.log(results); 
+  });
 }
 
 app.post('/recognition', (req, res) => {
@@ -48,6 +51,10 @@ app.get('/answeryes', (req, res) => {
   
 app.get('/answerno', (req, res) => {
   append('no\n', res)
+})
+
+app.get('/attendances', (req, res) => {
+
 })
 
 function append(msg :string, res :any) {

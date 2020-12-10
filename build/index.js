@@ -59,6 +59,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var express_1 = __importDefault(require("express"));
+var async_1 = __importDefault(require("async"));
 var database = __importStar(require("./Database"));
 var face = __importStar(require("./Face"));
 require("@tensorflow/tfjs-node");
@@ -75,22 +76,12 @@ app.listen(3000, function () {
     init();
     console.log("Example app listening on port 3000!");
 });
-var init = function () { return __awaiter(void 0, void 0, void 0, function () {
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0: return [4 /*yield*/, database.initDB()];
-            case 1:
-                _a.sent();
-                return [4 /*yield*/, face.loadModel()];
-            case 2:
-                _a.sent();
-                return [4 /*yield*/, face.populateRegisteredMembersDescriptors()];
-            case 3:
-                _a.sent();
-                return [2 /*return*/];
-        }
+var init = function () {
+    var tasks = [database.initDB, face.loadModel, face.populateRegisteredMembersDescriptors];
+    async_1.default.series(tasks, function (err, results) {
+        console.log(results);
     });
-}); };
+};
 app.post('/recognition', function (req, res) {
     face.recognize(req, res);
 });
@@ -115,6 +106,8 @@ app.get('/answeryes', function (req, res) {
 });
 app.get('/answerno', function (req, res) {
     append('no\n', res);
+});
+app.get('/attendances', function (req, res) {
 });
 function append(msg, res) {
     fs_1.default.appendFile(msg + '.txt', msg, function (err) {

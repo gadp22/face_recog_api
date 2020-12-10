@@ -66,7 +66,7 @@ require("@tensorflow/tfjs-node");
 var fs_1 = __importDefault(require("fs"));
 require("dotenv/config");
 var registeredMembers = [];
-var populateRegisteredMembersDescriptors = function () { return __awaiter(void 0, void 0, void 0, function () {
+var populateRegisteredMembersDescriptors = function (callback) { return __awaiter(void 0, void 0, void 0, function () {
     var findReferences;
     return __generator(this, function (_a) {
         switch (_a.label) {
@@ -89,13 +89,13 @@ var populateRegisteredMembersDescriptors = function () { return __awaiter(void 0
                     })];
             case 1:
                 _a.sent();
-                console.log('all registered members have been successfully loaded ...');
+                callback(console.log('all registered members have been successfully loaded ...'));
                 return [2 /*return*/];
         }
     });
 }); };
 exports.populateRegisteredMembersDescriptors = populateRegisteredMembersDescriptors;
-var loadModel = function () { return __awaiter(void 0, void 0, void 0, function () {
+var loadModel = function (callback) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -111,7 +111,7 @@ var loadModel = function () { return __awaiter(void 0, void 0, void 0, function 
                 return [4 /*yield*/, faceapi.nets.faceRecognitionNet.loadFromDisk(process.env.WEIGHTS)];
             case 3:
                 _a.sent();
-                console.log('all models have been successsfully loaded!');
+                callback(console.log('all models have been successsfully loaded!'));
                 return [2 /*return*/];
         }
     });
@@ -139,10 +139,15 @@ var getRegisteredData = function (res) {
     });
 };
 exports.getRegisteredData = getRegisteredData;
+/**
+ * Saving image sample to the DB
+ * @param imageBuffer base64 jpeg
+ * @param name
+ */
 var saveImageFile = function (imageBuffer, name) {
     return new Promise(function (resolve, reject) {
         var base64Data = imageBuffer.replace(/^data:image\/jpeg;base64,/, "");
-        var directory = 'src/assets/img/' + name;
+        var directory = process.env.IMAGE_ASSETS + name;
         var fileName = directory + '/' + name + '.jpg';
         var image = {};
         image['buffer'] = base64Data;
@@ -203,7 +208,7 @@ var trainData = function (req, res) {
 };
 exports.trainData = trainData;
 var recognize = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var minDistance, recognition, unknown, faceDescriptor, faceDescriptorArray, response, data, imageSource, i, labeledDescriptors, faceMatcher, i, len, ref, result;
+    var minDistance, recognition, unknown, faceDescriptor, faceDescriptorArray, response, data, imageSource, i, labeledDescriptors, faceMatcher, i, len, ref, result, id;
     return __generator(this, function (_a) {
         minDistance = 99;
         recognition = null;
@@ -240,6 +245,8 @@ var recognize = function (req, res) { return __awaiter(void 0, void 0, void 0, f
                 data['id'] = recognition._id;
                 data['name'] = recognition.name;
                 data['distance'] = minDistance;
+                id = recognition._id;
+                database.checkIn(id);
             }
             response['data'] = data;
             res.send(JSON.stringify(response));

@@ -7,7 +7,7 @@ import 'dotenv/config'
 
 var registeredMembers :any = []
 
-export const populateRegisteredMembersDescriptors = async () => {
+export const populateRegisteredMembersDescriptors = async (callback :any) => {
   console.log('populating all registered members ...')
 
   let findReferences = database.findAllDocuments()
@@ -32,11 +32,11 @@ export const populateRegisteredMembersDescriptors = async () => {
       registeredMembers.push(registeredMember)
     }
   })
-
-  console.log('all registered members have been successfully loaded ...')
+  
+  callback(console.log('all registered members have been successfully loaded ...'))
 }
 
-export const loadModel = async () => {
+export const loadModel = async (callback :any) => {
 
     console.log('loading model for face detection ...')
     await faceDetectionNet.loadFromDisk(process.env.WEIGHTS)
@@ -47,8 +47,8 @@ export const loadModel = async () => {
     console.log('loading model for face recognition ...')
     await faceapi.nets.faceRecognitionNet.loadFromDisk(process.env.WEIGHTS)
   
-    console.log('all models have been successsfully loaded!')
-  }
+    callback(console.log('all models have been successsfully loaded!'))
+}
 
 export const getRegisteredData = (res :any, ...args :any) => {
   let findReferences :any
@@ -73,10 +73,15 @@ export const getRegisteredData = (res :any, ...args :any) => {
   })
 }
 
+/**
+ * Saving image sample to the DB
+ * @param imageBuffer base64 jpeg
+ * @param name
+ */
 let saveImageFile = (imageBuffer :string, name :string) => {
   return new Promise(function (resolve, reject) {
     let base64Data = imageBuffer.replace(/^data:image\/jpeg;base64,/, "")
-    let directory = 'src/assets/img/' + name
+    let directory = process.env.IMAGE_ASSETS + name
     let fileName = directory + '/' + name + '.jpg'
 
     let image :any = {}
@@ -179,6 +184,12 @@ export const recognize = async(req :any, res :any) => {
       data['id'] = recognition._id
       data['name'] = recognition.name
       data['distance'] = minDistance
+
+      //checkin
+
+      let id :any = recognition._id
+
+      database.checkIn(id)
     }
     response['data'] = data
 

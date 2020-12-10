@@ -36,7 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.findAllDocuments = exports.insertDocuments = exports.initDB = void 0;
+exports.checkIn = exports.findAttendances = exports.getAttendanceData = exports.findAllDocuments = exports.insertDocuments = exports.initDB = void 0;
 require("mongodb");
 require("dotenv/config");
 require("./Face");
@@ -47,22 +47,21 @@ var dbName = 'face';
 var url = 'mongodb://' + process.env.DBHOST + ':' + process.env.DBPORT;
 var client = new MongoClient(url);
 var db;
-var initDB = function () { return __awaiter(void 0, void 0, void 0, function () {
+var initDB = function (callback) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         client.connect(function () {
-            console.log("Connected successfully to the database server");
             db = client.db(dbName);
+            callback(console.log('Connected successfully to the database server'));
         });
         return [2 /*return*/];
     });
 }); };
 exports.initDB = initDB;
 var insertDocuments = function (data) {
-    var collection = db.collection('descriptors');
     console.log("inserting documents");
-    collection.insertOne(data, function (err, result) {
+    db.collection('descriptors').insertOne(data, function (err, result) {
         console.log(err);
-        Face_1.populateRegisteredMembersDescriptors();
+        Face_1.populateRegisteredMembersDescriptors;
     });
 };
 exports.insertDocuments = insertDocuments;
@@ -71,17 +70,29 @@ var findAllDocuments = function () {
     for (var _i = 0; _i < arguments.length; _i++) {
         id[_i] = arguments[_i];
     }
-    var collection = db.collection('descriptors');
     return new Promise(function (resolve, reject) {
         if (id.length > 0) {
-            collection.findOne({ '_id': new ObjectID(id[0]) }, function (err, docs) {
+            db.collection('descriptors').findOne({ '_id': new ObjectID(id[0]) }, function (err, docs) {
                 if (err) {
                     return reject(err);
                 }
                 return resolve(docs);
             });
         }
-        collection.find().toArray(function (err, docs) {
+        else {
+            db.collection('descriptors').find().toArray(function (err, docs) {
+                if (err) {
+                    return reject(err);
+                }
+                return resolve(docs);
+            });
+        }
+    });
+};
+exports.findAllDocuments = findAllDocuments;
+var getAttendanceData = function (id) {
+    return new Promise(function (resolve, reject) {
+        db.collection('attendances').findOne({ '_id': new ObjectID(id[0]) }, function (err, docs) {
             if (err) {
                 return reject(err);
             }
@@ -89,4 +100,64 @@ var findAllDocuments = function () {
         });
     });
 };
-exports.findAllDocuments = findAllDocuments;
+exports.getAttendanceData = getAttendanceData;
+var findAttendances = function () {
+    var id = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        id[_i] = arguments[_i];
+    }
+    /*const collection = db.collection('descriptors')
+  
+    return new Promise(function(resolve, reject) {
+  
+      if (id.length > 0) {
+        collection.findOne({'_id': new ObjectID(id[0])}, function(err :any, docs :any) {
+            if (err) {
+              return reject(err)
+          }
+              return resolve(docs)
+        })
+      }
+  
+      collection.find().toArray( function(err :any, docs :any) {
+       if (err) {
+          return reject(err)
+       }
+          return resolve(docs)
+      })
+    })*/
+};
+exports.findAttendances = findAttendances;
+var updateAttendance = function (data) {
+    db.collection('attendances').insertOne(data, function (err, result) {
+        console.log(err);
+    });
+};
+var checkIn = function (id) {
+    var data = {};
+    var date = new Date(Date.now()).toUTCString();
+    console.log(date);
+    var query = { date: { $regex: "^" + date.substring(0, 15) } };
+    console.log(query);
+    data['member_id'] = id;
+    data['date'] = date;
+    db.collection('attendances').find(query).toArray(function (err, result) {
+        if (err)
+            throw err;
+        if (result.length == 0) {
+            data['status'] = 0;
+            updateAttendance(data);
+        }
+        else if (result.length == 1) {
+            data['status'] = 1;
+            updateAttendance(data);
+        }
+        else {
+            var attendant = result.find(function (x) { return x.status === 1; });
+            db.collection('attendances').updateOne({ '_id': attendant['_id'] }, { $set: { 'date': date } }, function (err, result) {
+                console.log(err);
+            });
+        }
+    });
+};
+exports.checkIn = checkIn;
