@@ -73,6 +73,24 @@ export const getRegisteredData = (res :any, ...args :any) => {
   })
 }
 
+export const getAttendanceData = (res :any, ...args :any) => {
+  let attendances :any = database.findAllAttendances()
+
+  attendances.then(function(ref :any) {
+      type Dict = { [key :string] :any }
+      const referenceObject :Dict = ref
+
+      let response :any = {}
+
+      response['status'] = '1'
+      response['message'] = 'success.'
+      response['data'] = referenceObject
+
+      res.send(JSON.stringify(response))
+  })
+  
+}
+
 /**
  * Saving image sample to the DB
  * @param imageBuffer base64 jpeg

@@ -48,38 +48,15 @@ export const findAllDocuments = (...id :any) => {
   })
 }
 
-export const getAttendanceData = (id :any) => {
+export const findAllAttendances = () => {
   return new Promise(function(resolve, reject) {
-    db.collection('attendances').findOne({'_id': new ObjectID(id[0])}, function(err :any, docs :any) {          
+    db.collection('attendances').find().toArray( function(err :any, docs :any) {
       if (err) {
-          return reject(err)
+         return reject(err)
       }
-          return resolve(docs)
+         return resolve(docs)
      })
   })
-}
-
-export const findAttendances = (...id :any) => {
-  /*const collection = db.collection('descriptors')
-
-  return new Promise(function(resolve, reject) {
-
-    if (id.length > 0) {
-      collection.findOne({'_id': new ObjectID(id[0])}, function(err :any, docs :any) {          
-          if (err) {
-            return reject(err)
-        }
-            return resolve(docs)
-      })
-    }
-
-    collection.find().toArray( function(err :any, docs :any) {
-     if (err) {
-        return reject(err)
-     }
-        return resolve(docs)
-    })
-  })*/
 }
 
 const updateAttendance = (data :any) => {
@@ -94,24 +71,30 @@ export const checkIn = (id :any) => {
 
   let query = { date: {$regex: "^" + date.substring(0,15)}}
 
-  data['member_id'] = id
-  data['date'] = date
+  findAllDocuments(id).then(function(object :any) {
+    type Dict = { [key :string] :any }
+    const member :Dict = object
 
-  db.collection('attendances').find(query).toArray(function(err :any, result :any) {
-    if (err) throw err
-    
-    if (result.length == 0) {
-      data['status'] = 0
-      updateAttendance(data)
-    } else if (result.length == 1) {
-      data['status'] = 1
-      updateAttendance(data)
-    } else {
-      let attendant = result.find((x :any) => x.status === 1)
+    data['member_id'] = id
+    data['date'] = date
+    data['name'] = member['name']
 
-      db.collection('attendances').updateOne({ '_id': attendant['_id'] }, {$set: {'date': date}}, function (err :any, result :any) {
-          console.log(err)
-      })
-    }
+    db.collection('attendances').find(query).toArray(function(err :any, result :any) {
+      if (err) throw err
+      
+      if (result.length == 0) {
+        data['status'] = 0
+        updateAttendance(data)
+      } else if (result.length == 1) {
+        data['status'] = 1
+        updateAttendance(data)
+      } else {
+        let attendant = result.find((x :any) => x.status === 1)
+
+        db.collection('attendances').updateOne({ '_id': attendant['_id'] }, {$set: {'date': date}}, function (err :any, result :any) {
+            console.log(err)
+        })
+      }
+    })
   })
 }

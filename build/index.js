@@ -108,6 +108,7 @@ app.get('/answerno', function (req, res) {
     append('no\n', res);
 });
 app.get('/attendances', function (req, res) {
+    face.getAttendanceData(res, req);
 });
 function append(msg, res) {
     fs_1.default.appendFile(msg + '.txt', msg, function (err) {

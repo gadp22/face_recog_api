@@ -58,7 +58,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.recognize = exports.trainData = exports.getRegisteredData = exports.loadModel = exports.populateRegisteredMembersDescriptors = void 0;
+exports.recognize = exports.trainData = exports.getAttendanceData = exports.getRegisteredData = exports.loadModel = exports.populateRegisteredMembersDescriptors = void 0;
 var commons_1 = require("./commons");
 var database = __importStar(require("./Database"));
 var faceapi = __importStar(require("face-api.js"));
@@ -139,6 +139,22 @@ var getRegisteredData = function (res) {
     });
 };
 exports.getRegisteredData = getRegisteredData;
+var getAttendanceData = function (res) {
+    var args = [];
+    for (var _i = 1; _i < arguments.length; _i++) {
+        args[_i - 1] = arguments[_i];
+    }
+    var attendances = database.findAllAttendances();
+    attendances.then(function (ref) {
+        var referenceObject = ref;
+        var response = {};
+        response['status'] = '1';
+        response['message'] = 'success.';
+        response['data'] = referenceObject;
+        res.send(JSON.stringify(response));
+    });
+};
+exports.getAttendanceData = getAttendanceData;
 /**
  * Saving image sample to the DB
  * @param imageBuffer base64 jpeg

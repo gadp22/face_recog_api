@@ -54,7 +54,7 @@ app.get('/answerno', (req, res) => {
 })
 
 app.get('/attendances', (req, res) => {
-
+    face.getAttendanceData(res, req)
 })
 
 function append(msg :string, res :any) {

@@ -36,7 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkIn = exports.findAttendances = exports.getAttendanceData = exports.findAllDocuments = exports.insertDocuments = exports.initDB = void 0;
+exports.checkIn = exports.findAllAttendances = exports.findAllDocuments = exports.insertDocuments = exports.initDB = void 0;
 require("mongodb");
 require("dotenv/config");
 require("./Face");
@@ -90,9 +90,9 @@ var findAllDocuments = function () {
     });
 };
 exports.findAllDocuments = findAllDocuments;
-var getAttendanceData = function (id) {
+var findAllAttendances = function () {
     return new Promise(function (resolve, reject) {
-        db.collection('attendances').findOne({ '_id': new ObjectID(id[0]) }, function (err, docs) {
+        db.collection('attendances').find().toArray(function (err, docs) {
             if (err) {
                 return reject(err);
             }
@@ -100,34 +100,7 @@ var getAttendanceData = function (id) {
         });
     });
 };
-exports.getAttendanceData = getAttendanceData;
-var findAttendances = function () {
-    var id = [];
-    for (var _i = 0; _i < arguments.length; _i++) {
-        id[_i] = arguments[_i];
-    }
-    /*const collection = db.collection('descriptors')
-  
-    return new Promise(function(resolve, reject) {
-  
-      if (id.length > 0) {
-        collection.findOne({'_id': new ObjectID(id[0])}, function(err :any, docs :any) {
-            if (err) {
-              return reject(err)
-          }
-              return resolve(docs)
-        })
-      }
-  
-      collection.find().toArray( function(err :any, docs :any) {
-       if (err) {
-          return reject(err)
-       }
-          return resolve(docs)
-      })
-    })*/
-};
-exports.findAttendances = findAttendances;
+exports.findAllAttendances = findAllAttendances;
 var updateAttendance = function (data) {
     db.collection('attendances').insertOne(data, function (err, result) {
         console.log(err);
@@ -136,28 +109,30 @@ var updateAttendance = function (data) {
 var checkIn = function (id) {
     var data = {};
     var date = new Date(Date.now()).toUTCString();
-    console.log(date);
     var query = { date: { $regex: "^" + date.substring(0, 15) } };
-    console.log(query);
-    data['member_id'] = id;
-    data['date'] = date;
-    db.collection('attendances').find(query).toArray(function (err, result) {
-        if (err)
-            throw err;
-        if (result.length == 0) {
-            data['status'] = 0;
-            updateAttendance(data);
-        }
-        else if (result.length == 1) {
-            data['status'] = 1;
-            updateAttendance(data);
-        }
-        else {
-            var attendant = result.find(function (x) { return x.status === 1; });
-            db.collection('attendances').updateOne({ '_id': attendant['_id'] }, { $set: { 'date': date } }, function (err, result) {
-                console.log(err);
-            });
-        }
+    exports.findAllDocuments(id).then(function (object) {
+        var member = object;
+        data['member_id'] = id;
+        data['date'] = date;
+        data['name'] = member['name'];
+        db.collection('attendances').find(query).toArray(function (err, result) {
+            if (err)
+                throw err;
+            if (result.length == 0) {
+                data['status'] = 0;
+                updateAttendance(data);
+            }
+            else if (result.length == 1) {
+                data['status'] = 1;
+                updateAttendance(data);
+            }
+            else {
+                var attendant = result.find(function (x) { return x.status === 1; });
+                db.collection('attendances').updateOne({ '_id': attendant['_id'] }, { $set: { 'date': date } }, function (err, result) {
+                    console.log(err);
+                });
+            }
+        });
     });
 };
 exports.checkIn = checkIn;
