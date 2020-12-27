@@ -65,13 +65,14 @@ var faceapi = __importStar(require("face-api.js"));
 require("@tensorflow/tfjs-node");
 var fs_1 = __importDefault(require("fs"));
 require("dotenv/config");
+var log = __importStar(require("./Logger"));
 var registeredMembers = [];
 var populateRegisteredMembersDescriptors = function (callback) { return __awaiter(void 0, void 0, void 0, function () {
     var findReferences;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                console.log('populating all registered members ...');
+                log.consol('populating all registered members ...');
                 findReferences = database.findAllDocuments();
                 return [4 /*yield*/, findReferences.then(function (imageReferences) {
                         var object = imageReferences;
@@ -89,7 +90,7 @@ var populateRegisteredMembersDescriptors = function (callback) { return __awaite
                     })];
             case 1:
                 _a.sent();
-                callback(console.log('all registered members have been successfully loaded ...'));
+                callback(log.consol('all registered members have been successfully loaded ...'));
                 return [2 /*return*/];
         }
     });
@@ -99,19 +100,19 @@ var loadModel = function (callback) { return __awaiter(void 0, void 0, void 0, f
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                console.log('loading model for face detection ...');
+                log.consol('loading model for face detection ...');
                 return [4 /*yield*/, commons_1.faceDetectionNet.loadFromDisk(process.env.WEIGHTS)];
             case 1:
                 _a.sent();
-                console.log('loading model for face landmark ...');
+                log.consol('loading model for face landmark ...');
                 return [4 /*yield*/, faceapi.nets.faceLandmark68Net.loadFromDisk(process.env.WEIGHTS)];
             case 2:
                 _a.sent();
-                console.log('loading model for face recognition ...');
+                log.consol('loading model for face recognition ...');
                 return [4 /*yield*/, faceapi.nets.faceRecognitionNet.loadFromDisk(process.env.WEIGHTS)];
             case 3:
                 _a.sent();
-                callback(console.log('all models have been successsfully loaded!'));
+                callback(log.consol('all models have been successsfully loaded!'));
                 return [2 /*return*/];
         }
     });
@@ -122,6 +123,7 @@ var getRegisteredData = function (res) {
     for (var _i = 1; _i < arguments.length; _i++) {
         args[_i - 1] = arguments[_i];
     }
+    log.print('getting registered data ...');
     var findReferences;
     if (args.length > 0) {
         findReferences = database.findAllDocuments(args[0]);
@@ -144,6 +146,7 @@ var getAttendanceData = function (res) {
     for (var _i = 1; _i < arguments.length; _i++) {
         args[_i - 1] = arguments[_i];
     }
+    log.print('getting attendance data ...');
     var attendances = database.findAllAttendances();
     attendances.then(function (ref) {
         var referenceObject = ref;
@@ -161,6 +164,7 @@ exports.getAttendanceData = getAttendanceData;
  * @param name
  */
 var saveImageFile = function (imageBuffer, name) {
+    log.print('saving image ...');
     return new Promise(function (resolve, reject) {
         var base64Data = imageBuffer.replace(/^data:image\/jpeg;base64,/, "");
         var directory = process.env.IMAGE_ASSETS + name;
@@ -178,6 +182,7 @@ var saveImageFile = function (imageBuffer, name) {
     });
 };
 var trainData = function (req, res) {
+    log.consol('training new data ...');
     var jsonData = {};
     var bodyImage = req.body['image'];
     var bodyName = req.body['name'];
@@ -202,7 +207,7 @@ var trainData = function (req, res) {
                                 return [4 /*yield*/, new faceapi.FaceMatcher(imageResult)];
                             case 3:
                                 faceMatcher = _c.sent();
-                                console.log(imageElement);
+                                log.consol(imageElement);
                                 console.log(imageResult);
                                 _a = jsonData;
                                 _b = 'descriptors';
@@ -210,7 +215,7 @@ var trainData = function (req, res) {
                             case 4:
                                 _a[_b] = _c.sent();
                                 database.insertDocuments(jsonData);
-                                console.log('done, saved results to the database.');
+                                log.consol('done, saved results to the database.');
                                 return [2 /*return*/];
                         }
                     });
@@ -218,59 +223,70 @@ var trainData = function (req, res) {
             });
         }
         catch (err) {
-            console.log(err);
+            log.consol(err);
         }
     }
 };
 exports.trainData = trainData;
 var recognize = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var minDistance, recognition, unknown, faceDescriptor, faceDescriptorArray, response, data, imageSource, i, labeledDescriptors, faceMatcher, i, len, ref, result, id;
+    var minDistance, recognition, unknown, faceDescriptor, faceDescriptorArray, response, data, imageSource, i, labeledDescriptors, faceMatcher, i, len, ref, result, id, err_1;
     return __generator(this, function (_a) {
-        minDistance = 99;
-        recognition = null;
-        unknown = 'unknown';
-        faceDescriptor = [];
-        faceDescriptorArray = [];
-        response = {};
-        data = {};
-        try {
-            imageSource = req.body.faceDescriptor;
-            for (i in imageSource) {
-                faceDescriptor.push(imageSource[i]);
-            }
-            faceDescriptorArray.push(new Float32Array(faceDescriptor));
-            labeledDescriptors = new faceapi.LabeledFaceDescriptors('person', faceDescriptorArray);
-            faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.45);
-            for (i = 0, len = registeredMembers.length; i < len; i++) {
-                ref = registeredMembers[i].data;
-                result = faceMatcher.findBestMatch(registeredMembers[i].descriptors);
-                if (result._label != unknown && result.distance < minDistance) {
-                    minDistance = result.distance;
-                    recognition = ref;
+        switch (_a.label) {
+            case 0:
+                log.consol('recognizing ...');
+                minDistance = 99;
+                recognition = null;
+                unknown = 'unknown';
+                faceDescriptor = [];
+                faceDescriptorArray = [];
+                response = {};
+                data = {};
+                _a.label = 1;
+            case 1:
+                _a.trys.push([1, 5, , 6]);
+                imageSource = req.body.faceDescriptor;
+                for (i in imageSource) {
+                    faceDescriptor.push(imageSource[i]);
                 }
-            }
-            if (recognition == null) {
+                faceDescriptorArray.push(new Float32Array(faceDescriptor));
+                labeledDescriptors = new faceapi.LabeledFaceDescriptors('person', faceDescriptorArray);
+                faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.45);
+                for (i = 0, len = registeredMembers.length; i < len; i++) {
+                    ref = registeredMembers[i].data;
+                    result = faceMatcher.findBestMatch(registeredMembers[i].descriptors);
+                    if (result._label != unknown && result.distance < minDistance) {
+                        minDistance = result.distance;
+                        recognition = ref;
+                    }
+                }
+                if (!(recognition == null)) return [3 /*break*/, 2];
                 response['status'] = '0';
                 response['message'] = 'error, unregistered member.';
                 data['name'] = unknown;
                 data['distance'] = minDistance;
-            }
-            else {
+                return [3 /*break*/, 4];
+            case 2:
+                log.print("face recognized : " + recognition.name);
                 response['status'] = '1';
                 response['message'] = 'success.';
                 data['id'] = recognition._id;
                 data['name'] = recognition.name;
                 data['distance'] = minDistance;
                 id = recognition._id;
-                database.checkIn(id);
-            }
-            response['data'] = data;
-            res.send(JSON.stringify(response));
+                return [4 /*yield*/, database.checkIn(id)];
+            case 3:
+                _a.sent();
+                _a.label = 4;
+            case 4:
+                response['data'] = data;
+                res.send(JSON.stringify(response));
+                return [3 /*break*/, 6];
+            case 5:
+                err_1 = _a.sent();
+                log.consol(err_1);
+                return [3 /*break*/, 6];
+            case 6: return [2 /*return*/];
         }
-        catch (err) {
-            console.log(err);
-        }
-        return [2 /*return*/];
     });
 }); };
 exports.recognize = recognize;

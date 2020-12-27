@@ -1,4 +1,23 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -41,6 +60,7 @@ require("mongodb");
 require("dotenv/config");
 require("./Face");
 var Face_1 = require("./Face");
+var log = __importStar(require("./Logger"));
 var ObjectID = require('mongodb').ObjectID;
 var MongoClient = require('mongodb').MongoClient;
 var dbName = 'face';
@@ -58,7 +78,7 @@ var initDB = function (callback) { return __awaiter(void 0, void 0, void 0, func
 }); };
 exports.initDB = initDB;
 var insertDocuments = function (data) {
-    console.log("inserting documents");
+    log.print("inserting documents ...");
     db.collection('descriptors').insertOne(data, function (err, result) {
         console.log(err);
         Face_1.populateRegisteredMembersDescriptors;
@@ -107,6 +127,7 @@ var updateAttendance = function (data) {
     });
 };
 var checkIn = function (id) {
+    log.print("checking in ...");
     var data = {};
     var date = new Date(Date.now()).toUTCString();
     var query = { date: { $regex: "^" + date.substring(0, 15) } };
@@ -119,14 +140,17 @@ var checkIn = function (id) {
             if (err)
                 throw err;
             if (result.length == 0) {
+                log.print("checking in: " + data['name']);
                 data['status'] = 0;
                 updateAttendance(data);
             }
             else if (result.length == 1) {
+                log.print("checking out: " + data['name']);
                 data['status'] = 1;
                 updateAttendance(data);
             }
             else {
+                log.print("updating check out: " + data['name']);
                 var attendant = result.find(function (x) { return x.status === 1; });
                 db.collection('attendances').updateOne({ '_id': attendant['_id'] }, { $set: { 'date': date } }, function (err, result) {
                     console.log(err);

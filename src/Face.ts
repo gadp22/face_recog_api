@@ -4,11 +4,12 @@ import * as faceapi from 'face-api.js'
 import '@tensorflow/tfjs-node'
 import fs, { fstatSync } from 'fs'
 import 'dotenv/config'
+import * as log from './Logger'
 
 var registeredMembers :any = []
 
 export const populateRegisteredMembersDescriptors = async (callback :any) => {
-  console.log('populating all registered members ...')
+  log.consol('populating all registered members ...')
 
   let findReferences = database.findAllDocuments()
   
@@ -33,24 +34,25 @@ export const populateRegisteredMembersDescriptors = async (callback :any) => {
     }
   })
   
-  callback(console.log('all registered members have been successfully loaded ...'))
+  callback(log.consol('all registered members have been successfully loaded ...'))
 }
 
 export const loadModel = async (callback :any) => {
 
-    console.log('loading model for face detection ...')
+    log.consol('loading model for face detection ...')
     await faceDetectionNet.loadFromDisk(process.env.WEIGHTS)
     
-    console.log('loading model for face landmark ...')
+    log.consol('loading model for face landmark ...')
     await faceapi.nets.faceLandmark68Net.loadFromDisk(process.env.WEIGHTS)
     
-    console.log('loading model for face recognition ...')
+    log.consol('loading model for face recognition ...')
     await faceapi.nets.faceRecognitionNet.loadFromDisk(process.env.WEIGHTS)
   
-    callback(console.log('all models have been successsfully loaded!'))
+    callback(log.consol('all models have been successsfully loaded!'))
 }
 
 export const getRegisteredData = (res :any, ...args :any) => {
+  log.print('getting registered data ...')
   let findReferences :any
   
   if (args.length > 0) {
@@ -74,6 +76,7 @@ export const getRegisteredData = (res :any, ...args :any) => {
 }
 
 export const getAttendanceData = (res :any, ...args :any) => {
+  log.print('getting attendance data ...')
   let attendances :any = database.findAllAttendances()
 
   attendances.then(function(ref :any) {
@@ -97,6 +100,8 @@ export const getAttendanceData = (res :any, ...args :any) => {
  * @param name
  */
 let saveImageFile = (imageBuffer :string, name :string) => {
+  log.print('saving image ...')
+
   return new Promise(function (resolve, reject) {
     let base64Data = imageBuffer.replace(/^data:image\/jpeg;base64,/, "")
     let directory = process.env.IMAGE_ASSETS + name
@@ -120,7 +125,8 @@ let saveImageFile = (imageBuffer :string, name :string) => {
 }
 
 export const trainData = (req :any, res :any) => {
-  
+  log.consol('training new data ...')
+
   let jsonData :any = {}
 
   let bodyImage = req.body['image']
@@ -140,23 +146,25 @@ export const trainData = (req :any, res :any) => {
         let imageResult = await faceapi.detectAllFaces(imageElement, faceDetectionOptions).withFaceLandmarks().withFaceDescriptors()
         let faceMatcher = await new faceapi.FaceMatcher(imageResult) 
 
-        console.log(imageElement)
+        log.consol(imageElement)
         console.log(imageResult)
   
         jsonData['descriptors'] = await faceMatcher.labeledDescriptors[0].descriptors[0]
 
         database.insertDocuments(jsonData)
   
-        console.log('done, saved results to the database.')
+        log.consol('done, saved results to the database.')
       })
       
     } catch (err) {
-       console.log(err)
+       log.consol(err)
     }
   }
 }
 
 export const recognize = async(req :any, res :any) => {
+  log.consol('recognizing ...')
+
   var minDistance = 99
   var recognition :any = null
 
@@ -196,6 +204,8 @@ export const recognize = async(req :any, res :any) => {
       data['name'] = unknown
       data['distance'] = minDistance
     } else {
+      log.print("face recognized : " + recognition.name)
+
       response['status'] = '1'
       response['message'] = 'success.'
 
@@ -213,6 +223,6 @@ export const recognize = async(req :any, res :any) => {
 
     res.send(JSON.stringify(response))
     } catch (err) {
-      console.log(err)
+      log.consol(err)
     }
   }

@@ -3,6 +3,7 @@ import 'dotenv/config';
 import './Face'
 import { populateRegisteredMembersDescriptors } from './Face';
 import { exp } from '@tensorflow/tfjs-node';
+import * as log from './Logger'
 
 const ObjectID = require('mongodb').ObjectID
 const MongoClient = require('mongodb').MongoClient
@@ -20,7 +21,7 @@ export const initDB = async (callback :any) => {
 }
 
 export const insertDocuments = (data :any) => {
-  console.log("inserting documents")
+  log.print("inserting documents ...")
 
   db.collection('descriptors').insertOne(data, function(err :any, result :any) {
       console.log(err)
@@ -66,6 +67,8 @@ const updateAttendance = (data :any) => {
 }
 
 export const checkIn = (id :any) => {
+  log.print("checking in ...")
+
   let data :any = {}
   let date = new Date(Date.now()).toUTCString()
 
@@ -83,12 +86,15 @@ export const checkIn = (id :any) => {
       if (err) throw err
       
       if (result.length == 0) {
+        log.print("checking in: " + data['name'])
         data['status'] = 0
         updateAttendance(data)
       } else if (result.length == 1) {
+        log.print("checking out: " + data['name'])
         data['status'] = 1
         updateAttendance(data)
       } else {
+        log.print("updating check out: " + data['name'])
         let attendant = result.find((x :any) => x.status === 1)
 
         db.collection('attendances').updateOne({ '_id': attendant['_id'] }, {$set: {'date': date}}, function (err :any, result :any) {
