@@ -67,35 +67,46 @@ var fs_1 = __importDefault(require("fs"));
 require("dotenv/config");
 var log = __importStar(require("./Logger"));
 var registeredMembers = [];
+var globalFaceMatcher;
 var populateRegisteredMembersDescriptors = function (callback) { return __awaiter(void 0, void 0, void 0, function () {
     var findReferences;
     return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                log.consol('populating all registered members ...');
-                findReferences = database.findAllDocuments();
-                return [4 /*yield*/, findReferences.then(function (imageReferences) {
-                        var object = imageReferences;
-                        var referenceObject = object;
-                        for (var i = 0, len = referenceObject.length; i < len; i++) {
-                            var registeredMember = {};
-                            var descriptors = [];
-                            for (var j in referenceObject[i].descriptors) {
-                                descriptors.push(referenceObject[i].descriptors[j]);
-                            }
-                            registeredMember['descriptors'] = new Float32Array(descriptors);
-                            registeredMember['data'] = referenceObject[i];
-                            registeredMembers.push(registeredMember);
-                        }
-                    })];
-            case 1:
-                _a.sent();
-                callback(log.consol('all registered members have been successfully loaded ...'));
-                return [2 /*return*/];
-        }
+        log.consol('populating all registered members ...');
+        findReferences = database.findAllDocuments();
+        findReferences.then(function (object) {
+            populateDescriptors(object);
+        });
+        callback(log.consol('all registered members have been successfully loaded ...'));
+        return [2 /*return*/];
     });
 }); };
 exports.populateRegisteredMembersDescriptors = populateRegisteredMembersDescriptors;
+var populateDescriptors = function (referenceObject) { return __awaiter(void 0, void 0, void 0, function () {
+    var registeredMemberDescriptor, labeledDescriptors, i, len, registeredMember, descriptors, j, key;
+    return __generator(this, function (_a) {
+        registeredMemberDescriptor = [];
+        labeledDescriptors = [];
+        for (i = 0, len = referenceObject.length; i < len; i++) {
+            registeredMember = {};
+            descriptors = [];
+            for (j in referenceObject[i].descriptors) {
+                descriptors.push(referenceObject[i].descriptors[j]);
+            }
+            registeredMember['descriptors'] = new Float32Array(descriptors);
+            registeredMember['data'] = referenceObject[i];
+            registeredMembers.push(registeredMember);
+            if (!registeredMemberDescriptor[referenceObject[i]['name']]) {
+                registeredMemberDescriptor[referenceObject[i]['name']] = [];
+            }
+            registeredMemberDescriptor[referenceObject[i]['name']].push(new Float32Array(descriptors));
+        }
+        for (key in registeredMemberDescriptor) {
+            labeledDescriptors.push(new faceapi.LabeledFaceDescriptors(key, registeredMemberDescriptor[key]));
+        }
+        globalFaceMatcher = new faceapi.FaceMatcher(labeledDescriptors);
+        return [2 /*return*/];
+    });
+}); };
 var loadModel = function (callback) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
@@ -208,7 +219,6 @@ var trainData = function (req, res) {
                             case 3:
                                 faceMatcher = _c.sent();
                                 log.consol(imageElement);
-                                console.log(imageResult);
                                 _a = jsonData;
                                 _b = 'descriptors';
                                 return [4 /*yield*/, faceMatcher.labeledDescriptors[0].descriptors[0]];
@@ -229,14 +239,10 @@ var trainData = function (req, res) {
 };
 exports.trainData = trainData;
 var recognize = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var minDistance, recognition, unknown, faceDescriptor, faceDescriptorArray, response, data, imageSource, i, labeledDescriptors, faceMatcher, i, len, ref, result, id;
+    var faceDescriptor, response, data, imageSource, i, bestMatch;
     return __generator(this, function (_a) {
         log.consol('recognizing ...');
-        minDistance = 99;
-        recognition = null;
-        unknown = 'unknown';
         faceDescriptor = [];
-        faceDescriptorArray = [];
         response = {};
         data = {};
         try {
@@ -244,38 +250,18 @@ var recognize = function (req, res) { return __awaiter(void 0, void 0, void 0, f
             for (i in imageSource) {
                 faceDescriptor.push(imageSource[i]);
             }
-            faceDescriptorArray.push(new Float32Array(faceDescriptor));
-            labeledDescriptors = new faceapi.LabeledFaceDescriptors('person', faceDescriptorArray);
-            faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.45);
-            for (i = 0, len = registeredMembers.length; i < len; i++) {
-                ref = registeredMembers[i].data;
-                result = faceMatcher.findBestMatch(registeredMembers[i].descriptors);
-                if (result._label != unknown && result.distance < minDistance) {
-                    minDistance = result.distance;
-                    recognition = ref;
-                }
-            }
-            if (recognition == null) {
-                response['status'] = '0';
-                response['message'] = 'error, unregistered member.';
-                data['name'] = unknown;
-                data['distance'] = minDistance;
-            }
-            else {
-                log.print("face recognized : " + recognition.name);
-                response['status'] = '1';
-                response['message'] = 'success.';
-                data['id'] = recognition._id;
-                data['name'] = recognition.name;
-                data['distance'] = minDistance;
-                id = recognition._id;
-                database.checkIn(id);
-            }
+            bestMatch = globalFaceMatcher.findBestMatch(new Float32Array(faceDescriptor));
+            log.print("face recognized : " + bestMatch.label);
+            response['status'] = '1';
+            response['message'] = 'success.';
+            data['name'] = bestMatch.label;
+            data['distance'] = bestMatch.distance;
+            database.checkIn(bestMatch.label);
             response['data'] = data;
             res.send(JSON.stringify(response));
         }
         catch (err) {
-            log.consol(err);
+            res.sen(JSON.stringify(err));
         }
         return [2 /*return*/];
     });

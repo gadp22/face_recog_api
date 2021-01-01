@@ -55,7 +55,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkIn = exports.findAllAttendances = exports.findAllDocuments = exports.insertDocuments = exports.initDB = void 0;
+exports.checkIn = exports.findAllAttendances = exports.findAllDocumentsByName = exports.findAllDocuments = exports.insertDocuments = exports.initDB = void 0;
 require("mongodb");
 require("dotenv/config");
 require("./Face");
@@ -116,6 +116,20 @@ var findAllDocuments = function () {
     });
 };
 exports.findAllDocuments = findAllDocuments;
+var findAllDocumentsByName = function (name) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        return [2 /*return*/, new Promise(function (resolve, reject) {
+                db.collection('descriptors').findOne({ 'name': name }, function (err, docs) {
+                    if (err) {
+                        log.printErr(err);
+                        return reject(err);
+                    }
+                    return resolve(docs);
+                });
+            })];
+    });
+}); };
+exports.findAllDocumentsByName = findAllDocumentsByName;
 var findAllAttendances = function () { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         return [2 /*return*/, new Promise(function (resolve, reject) {
@@ -143,11 +157,11 @@ var updateAttendance = function (data) { return __awaiter(void 0, void 0, void 0
             })];
     });
 }); };
-var checkIn = function (id) { return __awaiter(void 0, void 0, void 0, function () {
+var checkIn = function (name) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         log.print("checking in ...");
         return [2 /*return*/, new Promise(function (resolve, reject) {
-                exports.findAllDocuments(id).then(function (object) {
+                exports.findAllDocumentsByName(name).then(function (object) {
                     updateCheckIn(object);
                 }, function (error) {
                     log.printErr(error);

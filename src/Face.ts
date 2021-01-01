@@ -5,36 +5,53 @@ import '@tensorflow/tfjs-node'
 import fs, { fstatSync } from 'fs'
 import 'dotenv/config'
 import * as log from './Logger'
+import { LayersModel } from '@tensorflow/tfjs-node'
 
 var registeredMembers :any = []
+var globalFaceMatcher : faceapi.FaceMatcher
 
 export const populateRegisteredMembersDescriptors = async (callback : any) => {
   log.consol('populating all registered members ...')
 
   let findReferences = database.findAllDocuments()
   
-  await findReferences.then(function(imageReferences) {
-    type Dict = { [key :string] :any }
-    const object :any = imageReferences
-    const referenceObject :Dict = object
-
-    for (let i = 0, len = referenceObject.length; i < len; i++) {
-      let registeredMember :any = {}
-      
-      let descriptors = []
-
-      for (var j in referenceObject[i].descriptors) {
-        descriptors.push(referenceObject[i].descriptors[j])
-      }
-
-      registeredMember['descriptors'] = new Float32Array(descriptors)
-      registeredMember['data'] = referenceObject[i]
-
-      registeredMembers.push(registeredMember)
-    }
+  findReferences.then(function(object : any) {
+    populateDescriptors(object)
   })
   
   callback(log.consol('all registered members have been successfully loaded ...'))
+}
+
+const populateDescriptors = async (referenceObject : { [key :string] :any }) => {
+  
+  let registeredMemberDescriptor : { [key :string] : any } = []
+  let labeledDescriptors = []
+
+  for (let i = 0, len = referenceObject.length; i < len; i++) {
+    let registeredMember : any = {}
+    let descriptors = []
+
+    for (var j in referenceObject[i].descriptors) {
+      descriptors.push(referenceObject[i].descriptors[j])
+    }
+
+    registeredMember['descriptors'] = new Float32Array(descriptors)
+    registeredMember['data'] = referenceObject[i]
+
+    registeredMembers.push(registeredMember)
+
+    if(!registeredMemberDescriptor[referenceObject[i]['name']]) {
+      registeredMemberDescriptor[referenceObject[i]['name']] = []
+    }
+
+    registeredMemberDescriptor[referenceObject[i]['name']].push(new Float32Array(descriptors))
+  }
+
+  for (let key in registeredMemberDescriptor) {
+    labeledDescriptors.push(new faceapi.LabeledFaceDescriptors(key, registeredMemberDescriptor[key]))
+  }
+
+  globalFaceMatcher = new faceapi.FaceMatcher(labeledDescriptors)
 }
 
 export const loadModel = async (callback :any) => {
@@ -147,7 +164,6 @@ export const trainData = (req :any, res :any) => {
         let faceMatcher = await new faceapi.FaceMatcher(imageResult) 
 
         log.consol(imageElement)
-        console.log(imageResult)
   
         jsonData['descriptors'] = await faceMatcher.labeledDescriptors[0].descriptors[0]
 
@@ -165,13 +181,7 @@ export const trainData = (req :any, res :any) => {
 export const recognize = async(req :any, res :any) => {
   log.consol('recognizing ...')
 
-  var minDistance = 99
-  var recognition :any = null
-
-  const unknown :string = 'unknown'
-
   let faceDescriptor = []
-  let faceDescriptorArray = []
   let response :any = {}
   let data :any = {}
 
@@ -182,47 +192,22 @@ export const recognize = async(req :any, res :any) => {
       faceDescriptor.push(imageSource[i])
     }
 
-    faceDescriptorArray.push(new Float32Array(faceDescriptor))
+    const bestMatch = globalFaceMatcher.findBestMatch(new Float32Array(faceDescriptor))
 
-    let labeledDescriptors = new faceapi.LabeledFaceDescriptors('person', faceDescriptorArray)
-    let faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.45) 
+    log.print("face recognized : " + bestMatch.label)
 
-    for (let i = 0, len = registeredMembers.length; i < len; i++) {
-      let ref = registeredMembers[i].data
-      let result :any = faceMatcher.findBestMatch(registeredMembers[i].descriptors)
+    response['status'] = '1'
+    response['message'] = 'success.'
 
-      if (result._label != unknown && result.distance < minDistance) {
-        minDistance = result.distance
-        recognition = ref
-      }
-    }
+    data['name'] = bestMatch.label
+    data['distance'] = bestMatch.distance
 
-    if (recognition == null) {
-      response['status'] = '0'
-      response['message'] = 'error, unregistered member.'
-      
-      data['name'] = unknown
-      data['distance'] = minDistance
-    } else {
-      log.print("face recognized : " + recognition.name)
-
-      response['status'] = '1'
-      response['message'] = 'success.'
-
-      data['id'] = recognition._id
-      data['name'] = recognition.name
-      data['distance'] = minDistance
-
-      //checkin
-
-      let id :any = recognition._id
-
-      database.checkIn(id)
-    }
+    database.checkIn(bestMatch.label)
+    
     response['data'] = data
 
     res.send(JSON.stringify(response))
-    } catch (err) {
-      log.consol(err)
-    }
+  } catch (err) {
+    res.sen(JSON.stringify(err))
   }
+}

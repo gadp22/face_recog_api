@@ -4,6 +4,7 @@ import './Face'
 import { populateRegisteredMembersDescriptors } from './Face';
 import { exp } from '@tensorflow/tfjs-node';
 import * as log from './Logger'
+import { isNamespaceExport } from 'typescript';
 
 const ObjectID = require('mongodb').ObjectID
 const MongoClient = require('mongodb').MongoClient
@@ -51,6 +52,18 @@ export const findAllDocuments = async (...id : any) => {
   })
 }
 
+export const findAllDocumentsByName = async (name : any) => {
+  return new Promise(function(resolve, reject) {
+      db.collection('descriptors').findOne({'name': name}, function(err :any, docs :any) {          
+          if (err) {
+            log.printErr(err)
+            return reject(err)
+        }
+            return resolve(docs)
+      })
+  })
+}
+
 export const findAllAttendances = async () => {
   return new Promise(function(resolve, reject) {
     db.collection('attendances').find().sort({_id: -1}).toArray( function(err :any, docs :any) {
@@ -75,11 +88,11 @@ const updateAttendance = async (data : any) => {
   })
 }
 
-export const checkIn = async (id : any) => {
+export const checkIn = async (name : any) => {
   log.print("checking in ...")
 
   return new Promise(function(resolve, reject) {
-    findAllDocuments(id).then(
+    findAllDocumentsByName(name).then(
       function(object : any) {
         updateCheckIn(object)
       },
