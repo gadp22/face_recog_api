@@ -8,7 +8,7 @@ import * as log from './Logger'
 
 var registeredMembers :any = []
 
-export const populateRegisteredMembersDescriptors = async (callback :any) => {
+export const populateRegisteredMembersDescriptors = async (callback : any) => {
   log.consol('populating all registered members ...')
 
   let findReferences = database.findAllDocuments()

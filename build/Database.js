@@ -90,73 +90,102 @@ var findAllDocuments = function () {
     for (var _i = 0; _i < arguments.length; _i++) {
         id[_i] = arguments[_i];
     }
-    return new Promise(function (resolve, reject) {
-        if (id.length > 0) {
-            db.collection('descriptors').findOne({ '_id': new ObjectID(id[0]) }, function (err, docs) {
-                if (err) {
-                    return reject(err);
-                }
-                return resolve(docs);
-            });
-        }
-        else {
-            db.collection('descriptors').find().toArray(function (err, docs) {
-                if (err) {
-                    return reject(err);
-                }
-                return resolve(docs);
-            });
-        }
+    return __awaiter(void 0, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            return [2 /*return*/, new Promise(function (resolve, reject) {
+                    if (id.length > 0) {
+                        db.collection('descriptors').findOne({ '_id': new ObjectID(id[0]) }, function (err, docs) {
+                            if (err) {
+                                log.printErr(err);
+                                return reject(err);
+                            }
+                            return resolve(docs);
+                        });
+                    }
+                    else {
+                        db.collection('descriptors').find().toArray(function (err, docs) {
+                            if (err) {
+                                log.printErr(err);
+                                return reject(err);
+                            }
+                            return resolve(docs);
+                        });
+                    }
+                })];
+        });
     });
 };
 exports.findAllDocuments = findAllDocuments;
-var findAllAttendances = function () {
-    return new Promise(function (resolve, reject) {
-        db.collection('attendances').find().toArray(function (err, docs) {
-            if (err) {
-                return reject(err);
-            }
-            return resolve(docs);
-        });
-    });
-};
-exports.findAllAttendances = findAllAttendances;
-var updateAttendance = function (data) {
-    db.collection('attendances').insertOne(data, function (err, result) {
-        console.log(err);
-    });
-};
-var checkIn = function (id) {
-    log.print("checking in ...");
-    var data = {};
-    var date = new Date(Date.now()).toUTCString();
-    var query = { date: { $regex: "^" + date.substring(0, 15) } };
-    exports.findAllDocuments(id).then(function (object) {
-        var member = object;
-        data['member_id'] = id;
-        data['date'] = date;
-        data['name'] = member['name'];
-        db.collection('attendances').find(query).toArray(function (err, result) {
-            if (err)
-                throw err;
-            if (result.length == 0) {
-                log.print("checking in: " + data['name']);
-                data['status'] = 0;
-                updateAttendance(data);
-            }
-            else if (result.length == 1) {
-                log.print("checking out: " + data['name']);
-                data['status'] = 1;
-                updateAttendance(data);
-            }
-            else {
-                log.print("updating check out: " + data['name']);
-                var attendant = result.find(function (x) { return x.status === 1; });
-                db.collection('attendances').updateOne({ '_id': attendant['_id'] }, { $set: { 'date': date } }, function (err, result) {
-                    console.log(err);
+var findAllAttendances = function () { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        return [2 /*return*/, new Promise(function (resolve, reject) {
+                db.collection('attendances').find().sort({ _id: -1 }).toArray(function (err, docs) {
+                    if (err) {
+                        log.printErr(err);
+                        return reject(err);
+                    }
+                    return resolve(docs);
                 });
-            }
-        });
+            })];
     });
-};
+}); };
+exports.findAllAttendances = findAllAttendances;
+var updateAttendance = function (data) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        return [2 /*return*/, new Promise(function (resolve, reject) {
+                db.collection('attendances').insertOne(data, function (err, result) {
+                    if (err) {
+                        log.printErr(err);
+                        return reject(err);
+                    }
+                    return resolve(result);
+                });
+            })];
+    });
+}); };
+var checkIn = function (id) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        log.print("checking in ...");
+        return [2 /*return*/, new Promise(function (resolve, reject) {
+                exports.findAllDocuments(id).then(function (object) {
+                    updateCheckIn(object);
+                }, function (error) {
+                    log.printErr(error);
+                });
+            })];
+    });
+}); };
 exports.checkIn = checkIn;
+function updateCheckIn(object) {
+    var date = new Date(Date.now()).toUTCString();
+    var member = object;
+    var data = {};
+    data['member_id'] = object['_id'];
+    data['date'] = date;
+    data['name'] = member['name'];
+    var query = { date: { $regex: "^" + date.substring(0, 15) }, member_id: data['member_id'] };
+    db.collection('attendances').find(query).toArray(function (err, result) {
+        if (err) {
+            log.printErr(err);
+        }
+        if (result.length == 0) {
+            log.print("checking in: " + data['name']);
+            data['status'] = 0;
+            updateAttendance(data);
+        }
+        else if (result.length == 1) {
+            log.print("checking out: " + data['name']);
+            data['status'] = 1;
+            updateAttendance(data);
+        }
+        else {
+            log.print("updating check out: " + data['name']);
+            var attendant = result.find(function (x) { return x.status === 1; });
+            db.collection('attendances').updateOne({ '_id': attendant['_id'] }, { $set: { 'date': date } }, function (err, result) {
+                if (err) {
+                    log.printErr(err);
+                }
+            });
+        }
+    });
+}

@@ -229,43 +229,39 @@ var trainData = function (req, res) {
 };
 exports.trainData = trainData;
 var recognize = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var minDistance, recognition, unknown, faceDescriptor, faceDescriptorArray, response, data, imageSource, i, labeledDescriptors, faceMatcher, i, len, ref, result, id, err_1;
+    var minDistance, recognition, unknown, faceDescriptor, faceDescriptorArray, response, data, imageSource, i, labeledDescriptors, faceMatcher, i, len, ref, result, id;
     return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                log.consol('recognizing ...');
-                minDistance = 99;
-                recognition = null;
-                unknown = 'unknown';
-                faceDescriptor = [];
-                faceDescriptorArray = [];
-                response = {};
-                data = {};
-                _a.label = 1;
-            case 1:
-                _a.trys.push([1, 5, , 6]);
-                imageSource = req.body.faceDescriptor;
-                for (i in imageSource) {
-                    faceDescriptor.push(imageSource[i]);
+        log.consol('recognizing ...');
+        minDistance = 99;
+        recognition = null;
+        unknown = 'unknown';
+        faceDescriptor = [];
+        faceDescriptorArray = [];
+        response = {};
+        data = {};
+        try {
+            imageSource = req.body.faceDescriptor;
+            for (i in imageSource) {
+                faceDescriptor.push(imageSource[i]);
+            }
+            faceDescriptorArray.push(new Float32Array(faceDescriptor));
+            labeledDescriptors = new faceapi.LabeledFaceDescriptors('person', faceDescriptorArray);
+            faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.45);
+            for (i = 0, len = registeredMembers.length; i < len; i++) {
+                ref = registeredMembers[i].data;
+                result = faceMatcher.findBestMatch(registeredMembers[i].descriptors);
+                if (result._label != unknown && result.distance < minDistance) {
+                    minDistance = result.distance;
+                    recognition = ref;
                 }
-                faceDescriptorArray.push(new Float32Array(faceDescriptor));
-                labeledDescriptors = new faceapi.LabeledFaceDescriptors('person', faceDescriptorArray);
-                faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.45);
-                for (i = 0, len = registeredMembers.length; i < len; i++) {
-                    ref = registeredMembers[i].data;
-                    result = faceMatcher.findBestMatch(registeredMembers[i].descriptors);
-                    if (result._label != unknown && result.distance < minDistance) {
-                        minDistance = result.distance;
-                        recognition = ref;
-                    }
-                }
-                if (!(recognition == null)) return [3 /*break*/, 2];
+            }
+            if (recognition == null) {
                 response['status'] = '0';
                 response['message'] = 'error, unregistered member.';
                 data['name'] = unknown;
                 data['distance'] = minDistance;
-                return [3 /*break*/, 4];
-            case 2:
+            }
+            else {
                 log.print("face recognized : " + recognition.name);
                 response['status'] = '1';
                 response['message'] = 'success.';
@@ -273,20 +269,15 @@ var recognize = function (req, res) { return __awaiter(void 0, void 0, void 0, f
                 data['name'] = recognition.name;
                 data['distance'] = minDistance;
                 id = recognition._id;
-                return [4 /*yield*/, database.checkIn(id)];
-            case 3:
-                _a.sent();
-                _a.label = 4;
-            case 4:
-                response['data'] = data;
-                res.send(JSON.stringify(response));
-                return [3 /*break*/, 6];
-            case 5:
-                err_1 = _a.sent();
-                log.consol(err_1);
-                return [3 /*break*/, 6];
-            case 6: return [2 /*return*/];
+                database.checkIn(id);
+            }
+            response['data'] = data;
+            res.send(JSON.stringify(response));
         }
+        catch (err) {
+            log.consol(err);
+        }
+        return [2 /*return*/];
     });
 }); };
 exports.recognize = recognize;

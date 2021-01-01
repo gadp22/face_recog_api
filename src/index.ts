@@ -4,6 +4,7 @@ import * as database from './Database'
 import * as face from './Face'
 import '@tensorflow/tfjs-node'
 import fs from 'fs'
+import * as log from './Logger'
 
 const app = express()
 
@@ -16,16 +17,26 @@ app.use(function(req, res, next) {
 })
 
 app.listen(3000, () => {
-    init()
-    console.log(`Example app listening on port 3000!`)
+    init().then(
+      function () {
+        log.consol(`Example app listening on port 3000!`)
+      },
+      function (error) {
+        log.printErr(error)
+      }
+    )
   }
 )
 
-let init = () => {
+let init = async () => {
   const tasks = [database.initDB, face.loadModel, face.populateRegisteredMembersDescriptors]
   
   async.series(tasks, function (err, results) {
-    console.log(results); 
+    if (err) {
+      log.printErr(err)
+    } else {
+      log.consol(results); 
+    }
   });
 }
 
@@ -34,7 +45,7 @@ app.post('/recognition', (req, res) => {
 })
 
 app.post('/members', async (req, res) => {
-  await face.trainData(req, res)
+  face.trainData(req, res)
 })
 
 app.get('/members', (req, res) => {

@@ -64,6 +64,7 @@ var database = __importStar(require("./Database"));
 var face = __importStar(require("./Face"));
 require("@tensorflow/tfjs-node");
 var fs_1 = __importDefault(require("fs"));
+var log = __importStar(require("./Logger"));
 var app = express_1.default();
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use(express_1.default.json());
@@ -73,26 +74,34 @@ app.use(function (req, res, next) {
     next();
 });
 app.listen(3000, function () {
-    init();
-    console.log("Example app listening on port 3000!");
-});
-var init = function () {
-    var tasks = [database.initDB, face.loadModel, face.populateRegisteredMembersDescriptors];
-    async_1.default.series(tasks, function (err, results) {
-        console.log(results);
+    init().then(function () {
+        log.consol("Example app listening on port 3000!");
+    }, function (error) {
+        log.printErr(error);
     });
-};
+});
+var init = function () { return __awaiter(void 0, void 0, void 0, function () {
+    var tasks;
+    return __generator(this, function (_a) {
+        tasks = [database.initDB, face.loadModel, face.populateRegisteredMembersDescriptors];
+        async_1.default.series(tasks, function (err, results) {
+            if (err) {
+                log.printErr(err);
+            }
+            else {
+                log.consol(results);
+            }
+        });
+        return [2 /*return*/];
+    });
+}); };
 app.post('/recognition', function (req, res) {
     face.recognize(req, res);
 });
 app.post('/members', function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0: return [4 /*yield*/, face.trainData(req, res)];
-            case 1:
-                _a.sent();
-                return [2 /*return*/];
-        }
+        face.trainData(req, res);
+        return [2 /*return*/];
     });
 }); });
 app.get('/members', function (req, res) {
