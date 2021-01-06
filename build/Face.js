@@ -104,6 +104,7 @@ var populateDescriptors = function (referenceObject) { return __awaiter(void 0, 
             labeledDescriptors.push(new faceapi.LabeledFaceDescriptors(key, registeredMemberDescriptor[key]));
         }
         globalFaceMatcher = new faceapi.FaceMatcher(labeledDescriptors);
+        console.log(globalFaceMatcher);
         return [2 /*return*/];
     });
 }); };

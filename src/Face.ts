@@ -52,6 +52,8 @@ const populateDescriptors = async (referenceObject : { [key :string] :any }) => 
   }
 
   globalFaceMatcher = new faceapi.FaceMatcher(labeledDescriptors)
+
+  console.log(globalFaceMatcher)
 }
 
 export const loadModel = async (callback :any) => {
@@ -160,7 +162,7 @@ export const trainData = (req :any, res :any) => {
         
         //single 
         let imageElement = await canvas.loadImage(image['uri'])
-        let imageResult = await faceapi.detectAllFaces(imageElement, faceDetectionOptions).withFaceLandmarks().withFaceDescriptors()
+        let imageResult = await faceapi.detectSingleFace(imageElement, faceDetectionOptions).withFaceLandmarks().withFaceDescriptor()
         let faceMatcher = await new faceapi.FaceMatcher(imageResult) 
 
         log.consol(imageElement)
