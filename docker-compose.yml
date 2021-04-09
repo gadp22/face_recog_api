@@ -1,0 +1,27 @@
+version: "3.7"
+services:
+    db:
+        image: mongo:3.6-xenial
+        container_name: facerecognition-db
+        restart: unless-stopped
+        ports: 
+            - 27017:27017
+        networks: 
+            - facerecognition
+    app:
+        build:
+            context: ./
+            dockerfile: Dockerfile
+        image: facerecognition-api
+        restart: unless-stopped
+        container_name: facerecognition-api
+        working_dir: /var/www/
+        volumes:
+            - ./:/var/www
+        ports: 
+            - 8080:8080
+        networks:
+            - facerecognition
+networks:
+    facerecognition:
+        driver: bridge
