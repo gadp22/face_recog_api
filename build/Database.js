@@ -14,7 +14,7 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 var __importStar = (this && this.__importStar) || function (mod) {
     if (mod && mod.__esModule) return mod;
     var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
     __setModuleDefault(result, mod);
     return result;
 };
@@ -64,10 +64,10 @@ var log = __importStar(require("./Logger"));
 var ObjectID = require('mongodb').ObjectID;
 var MongoClient = require('mongodb').MongoClient;
 var dbName = 'face';
-var url = 'mongodb://' + process.env.DBHOST + ':' + process.env.DBPORT;
+var url = 'mongodb://0.0.0.0:27017';
 var client = new MongoClient(url);
 var db;
-var initDB = function (callback) { return __awaiter(void 0, void 0, void 0, function () {
+exports.initDB = function (callback) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         client.connect(function () {
             db = client.db(dbName);
@@ -76,16 +76,14 @@ var initDB = function (callback) { return __awaiter(void 0, void 0, void 0, func
         return [2 /*return*/];
     });
 }); };
-exports.initDB = initDB;
-var insertDocuments = function (data) {
+exports.insertDocuments = function (data) {
     log.print("inserting documents ...");
     db.collection('descriptors').insertOne(data, function (err, result) {
         console.log(err);
         Face_1.populateRegisteredMembersDescriptors;
     });
 };
-exports.insertDocuments = insertDocuments;
-var findAllDocuments = function () {
+exports.findAllDocuments = function () {
     var id = [];
     for (var _i = 0; _i < arguments.length; _i++) {
         id[_i] = arguments[_i];
@@ -115,8 +113,7 @@ var findAllDocuments = function () {
         });
     });
 };
-exports.findAllDocuments = findAllDocuments;
-var findAllDocumentsByName = function (name) { return __awaiter(void 0, void 0, void 0, function () {
+exports.findAllDocumentsByName = function (name) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         return [2 /*return*/, new Promise(function (resolve, reject) {
                 db.collection('descriptors').findOne({ 'name': name }, function (err, docs) {
@@ -129,8 +126,7 @@ var findAllDocumentsByName = function (name) { return __awaiter(void 0, void 0, 
             })];
     });
 }); };
-exports.findAllDocumentsByName = findAllDocumentsByName;
-var findAllAttendances = function () { return __awaiter(void 0, void 0, void 0, function () {
+exports.findAllAttendances = function () { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         return [2 /*return*/, new Promise(function (resolve, reject) {
                 db.collection('attendances').find().sort({ _id: -1 }).toArray(function (err, docs) {
@@ -143,7 +139,6 @@ var findAllAttendances = function () { return __awaiter(void 0, void 0, void 0, 
             })];
     });
 }); };
-exports.findAllAttendances = findAllAttendances;
 var updateAttendance = function (data) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         return [2 /*return*/, new Promise(function (resolve, reject) {
@@ -157,7 +152,7 @@ var updateAttendance = function (data) { return __awaiter(void 0, void 0, void 0
             })];
     });
 }); };
-var checkIn = function (name) { return __awaiter(void 0, void 0, void 0, function () {
+exports.checkIn = function (name) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         log.print("checking in ...");
         return [2 /*return*/, new Promise(function (resolve, reject) {
@@ -169,7 +164,6 @@ var checkIn = function (name) { return __awaiter(void 0, void 0, void 0, functio
             })];
     });
 }); };
-exports.checkIn = checkIn;
 function updateCheckIn(object) {
     var date = new Date(Date.now()).toUTCString();
     var member = object;

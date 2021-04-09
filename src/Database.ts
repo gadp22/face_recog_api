@@ -1,7 +1,7 @@
 import 'mongodb'
 import 'dotenv/config';
 import './Face'
-import { populateRegisteredMembersDescriptors } from './Face';
+import { populateRegisteredMembersDescriptors } from './Face'
 import { exp } from '@tensorflow/tfjs-node';
 import * as log from './Logger'
 import { isNamespaceExport } from 'typescript';
@@ -9,7 +9,7 @@ import { isNamespaceExport } from 'typescript';
 const ObjectID = require('mongodb').ObjectID
 const MongoClient = require('mongodb').MongoClient
 const dbName = 'face'
-const url = 'mongodb://' + process.env.DBHOST + ':' + process.env.DBPORT
+const url = 'mongodb://0.0.0.0:27017'
 const client = new MongoClient(url)
 
 var db : any

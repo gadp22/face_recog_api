@@ -14,7 +14,7 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 var __importStar = (this && this.__importStar) || function (mod) {
     if (mod && mod.__esModule) return mod;
     var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
     __setModuleDefault(result, mod);
     return result;
 };
@@ -68,7 +68,7 @@ require("dotenv/config");
 var log = __importStar(require("./Logger"));
 var registeredMembers = [];
 var globalFaceMatcher;
-var populateRegisteredMembersDescriptors = function (callback) { return __awaiter(void 0, void 0, void 0, function () {
+exports.populateRegisteredMembersDescriptors = function (callback) { return __awaiter(void 0, void 0, void 0, function () {
     var findReferences;
     return __generator(this, function (_a) {
         log.consol('populating all registered members ...');
@@ -80,7 +80,6 @@ var populateRegisteredMembersDescriptors = function (callback) { return __awaite
         return [2 /*return*/];
     });
 }); };
-exports.populateRegisteredMembersDescriptors = populateRegisteredMembersDescriptors;
 var populateDescriptors = function (referenceObject) { return __awaiter(void 0, void 0, void 0, function () {
     var registeredMemberDescriptor, labeledDescriptors, i, len, registeredMember, descriptors, j, key;
     return __generator(this, function (_a) {
@@ -108,7 +107,7 @@ var populateDescriptors = function (referenceObject) { return __awaiter(void 0, 
         return [2 /*return*/];
     });
 }); };
-var loadModel = function (callback) { return __awaiter(void 0, void 0, void 0, function () {
+exports.loadModel = function (callback) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -129,8 +128,7 @@ var loadModel = function (callback) { return __awaiter(void 0, void 0, void 0, f
         }
     });
 }); };
-exports.loadModel = loadModel;
-var getRegisteredData = function (res) {
+exports.getRegisteredData = function (res) {
     var args = [];
     for (var _i = 1; _i < arguments.length; _i++) {
         args[_i - 1] = arguments[_i];
@@ -152,8 +150,7 @@ var getRegisteredData = function (res) {
         res.send(JSON.stringify(response));
     });
 };
-exports.getRegisteredData = getRegisteredData;
-var getAttendanceData = function (res) {
+exports.getAttendanceData = function (res) {
     var args = [];
     for (var _i = 1; _i < arguments.length; _i++) {
         args[_i - 1] = arguments[_i];
@@ -169,7 +166,6 @@ var getAttendanceData = function (res) {
         res.send(JSON.stringify(response));
     });
 };
-exports.getAttendanceData = getAttendanceData;
 /**
  * Saving image sample to the DB
  * @param imageBuffer base64 jpeg
@@ -193,7 +189,7 @@ var saveImageFile = function (imageBuffer, name) {
         });
     });
 };
-var trainData = function (req, res) {
+exports.trainData = function (req, res) {
     log.consol('training new data ...');
     var jsonData = {};
     var bodyImage = req.body['image'];
@@ -213,7 +209,7 @@ var trainData = function (req, res) {
                                 return [4 /*yield*/, commons_1.canvas.loadImage(image['uri'])];
                             case 1:
                                 imageElement = _c.sent();
-                                return [4 /*yield*/, faceapi.detectAllFaces(imageElement, commons_1.faceDetectionOptions).withFaceLandmarks().withFaceDescriptors()];
+                                return [4 /*yield*/, faceapi.detectSingleFace(imageElement, commons_1.faceDetectionOptions).withFaceLandmarks().withFaceDescriptor()];
                             case 2:
                                 imageResult = _c.sent();
                                 return [4 /*yield*/, new faceapi.FaceMatcher(imageResult)];
@@ -238,8 +234,7 @@ var trainData = function (req, res) {
         }
     }
 };
-exports.trainData = trainData;
-var recognize = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+exports.recognize = function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
     var faceDescriptor, response, data, imageSource, i, bestMatch;
     return __generator(this, function (_a) {
         log.consol('recognizing ...');
@@ -267,4 +262,3 @@ var recognize = function (req, res) { return __awaiter(void 0, void 0, void 0, f
         return [2 /*return*/];
     });
 }); };
-exports.recognize = recognize;
